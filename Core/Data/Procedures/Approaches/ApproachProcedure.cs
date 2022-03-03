@@ -69,6 +69,8 @@ namespace VatsimAtcTrainingSimulator.Core.Data.Procedures.Approaches
         private ApproachType _type;
         private char _letter;
         private string _rwy;
+        private string _airportIcao;
+        private string _navaidId;
         private ApproachMinimums _mins;
         private ApproachMinimums _circleMins;
         private List<ProcedureSegment> _initSegments;
@@ -82,8 +84,9 @@ namespace VatsimAtcTrainingSimulator.Core.Data.Procedures.Approaches
             _finalSegment = new ProcedureSegment();
 
         }
-        private ApproachProcedure(ApproachType type, char letter, string rwy, ApproachMinimums mins, ApproachMinimums circleMins, List<ProcedureSegment> initSegments, ProcedureSegment finalSegment, ProcedureSegment defaultMaSegment, List<ProcedureSegment> alternateMaSegments)
+        private ApproachProcedure(string airportIcao, ApproachType type, char letter, string rwy, ApproachMinimums mins, ApproachMinimums circleMins, List<ProcedureSegment> initSegments, ProcedureSegment finalSegment, ProcedureSegment defaultMaSegment, List<ProcedureSegment> alternateMaSegments)
         {
+            _airportIcao = airportIcao;
             _type = type;
             _letter = letter;
             _rwy = rwy;
@@ -96,6 +99,16 @@ namespace VatsimAtcTrainingSimulator.Core.Data.Procedures.Approaches
                 defaultMaSegment
             };
             _maSegments.AddRange(alternateMaSegments);
+        }
+
+        public string AirportIcao {
+            get => _airportIcao;
+            set => _airportIcao = value;
+        }
+
+        public string NavaidId {
+            get => _navaidId;
+            set => _navaidId = value;
         }
 
         public ApproachType Type

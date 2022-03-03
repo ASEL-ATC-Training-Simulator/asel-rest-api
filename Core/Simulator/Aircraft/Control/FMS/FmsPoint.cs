@@ -28,9 +28,9 @@ namespace VatsimAtcTrainingSimulator.Core.Simulator.Aircraft.Control.FMS
 
         public RoutePointTypeEnum PointType { get => _routePointType; set => _routePointType = value; }
 
-        public ConstraintType AltitudeConstraintType { get; set; } = ConstraintType.FREE;
+        public double LowerAltitudeConstraint { get; set; }
 
-        public double AltitudeConstraint { get; set; }
+        public double UpperAltitudeConstraint { get; set; }
 
         public ConstraintType SpeedConstraintType { get; set; } = ConstraintType.FREE;
 
