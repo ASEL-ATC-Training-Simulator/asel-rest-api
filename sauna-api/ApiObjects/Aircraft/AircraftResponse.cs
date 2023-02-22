@@ -17,6 +17,7 @@ namespace SaunaSim.Api.ApiObjects.Aircraft
         public int DelayMs { get; set; }
         public bool Paused { get; set; }
         public string FlightPlan { get; set; }
+        public double ThrustLeverPos { get; set; }
         public TransponderModeType XpdrMode { get; set; }
         public int Squawk { get; set; }
         public AircraftPosition Position { get; set; }
@@ -43,6 +44,7 @@ namespace SaunaSim.Api.ApiObjects.Aircraft
             Assigned_IAS = pilot.Assigned_IAS;
             Assigned_IAS_Type = pilot.Assigned_IAS_Type;
             ConnectionStatus = pilot.ConnectionStatus;
+            ThrustLeverPos = pilot.ThrustLeverPosition;
         }
 
         public class AircraftControlResponse

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using SaunaSim.Core.Simulator.Aircraft.Performance;
 
 namespace SaunaSim.Api
 {
@@ -16,6 +17,7 @@ namespace SaunaSim.Api
         {
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+            PerfDataHandler.Test1000();
             CreateHostBuilder(args).Build().Run();
         }
 

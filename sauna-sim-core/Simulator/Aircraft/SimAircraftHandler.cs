@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace SaunaSim.Core.Simulator.Aircraft
 {
@@ -16,13 +17,12 @@ namespace SaunaSim.Core.Simulator.Aircraft
             }
         }
 
-        public static List<SimAircraft> Aircraft {
-            get {
-                lock (_aircraftsLock)
-                {
-                    return _aircrafts;
-                }
-            } 
+        public static void PerformOnAircraft(Action<List<SimAircraft>> action)
+        {
+            lock (_aircraftsLock)
+            {
+                action(_aircrafts);
+            }
         }
 
         public static bool AllPaused {

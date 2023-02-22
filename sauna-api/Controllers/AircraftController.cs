@@ -20,7 +20,6 @@ namespace SaunaSim.Api.Controllers
     [Route("api/aircraft")]
     public class AircraftController : ControllerBase
     {
-
         private readonly ILogger<DataController> _logger;
 
         public AircraftController(ILogger<DataController> logger)
@@ -31,7 +30,8 @@ namespace SaunaSim.Api.Controllers
         [HttpPost("create")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<AircraftResponse> CreateAircraft(CreateAircraftRequest request) // reuses code from DataController.LoadEuroScopeScenario. Both should use the same function.
+        public ActionResult<AircraftResponse>
+            CreateAircraft(CreateAircraftRequest request) // reuses code from DataController.LoadEuroScopeScenario. Both should use the same function.
         {
             try
             {
@@ -39,15 +39,9 @@ namespace SaunaSim.Api.Controllers
                     ClientInfoLoader.GetClientInfo((string msg) => { _logger.LogWarning($"{request.Callsign}: {msg}"); }),
                     request.Position.Latitude, request.Position.Longitude, request.Position.IndicatedAltitude, request.Position.MagneticHeading)
                 {
-                    LogInfo = (string msg) => {
-                        _logger.LogInformation($"{request.Callsign}: {msg}");
-                    },
-                    LogWarn = (string msg) => {
-                        _logger.LogWarning($"{request.Callsign}: {msg}");
-                    },
-                    LogError = (string msg) => {
-                        _logger.LogError($"{request.Callsign}: {msg}");
-                    },
+                    LogInfo = (string msg) => { _logger.LogInformation($"{request.Callsign}: {msg}"); },
+                    LogWarn = (string msg) => { _logger.LogWarning($"{request.Callsign}: {msg}"); },
+                    LogError = (string msg) => { _logger.LogError($"{request.Callsign}: {msg}"); },
 
                     XpdrMode = request.TransponderMode,
                     Squawk = request.Squawk,
@@ -59,11 +53,11 @@ namespace SaunaSim.Api.Controllers
                 if (request.Position.IsMachNumber)
                 {
                     pilot.Position.MachNumber = request.Position.IndicatedSpeed;
-                } else
+                }
+                else
                 {
                     pilot.Position.IndicatedAirSpeed = request.Position.IndicatedSpeed;
                 }
-
 
 
                 List<IRouteLeg> legs = new List<IRouteLeg>();
@@ -79,11 +73,13 @@ namespace SaunaSim.Api.Controllers
                         if (pubHold != null)
                         {
                             lastPoint.PointType = RoutePointTypeEnum.FLY_OVER;
-                            HoldToManualLeg leg = new HoldToManualLeg(lastPoint, BearingTypeEnum.MAGNETIC, pubHold.InboundCourse, pubHold.TurnDirection, pubHold.LegLengthType, pubHold.LegLength);
+                            HoldToManualLeg leg = new HoldToManualLeg(lastPoint, BearingTypeEnum.MAGNETIC, pubHold.InboundCourse, pubHold.TurnDirection, pubHold.LegLengthType,
+                                pubHold.LegLength);
                             legs.Add(leg);
                             lastPoint = leg.EndPoint;
                         }
-                    } else
+                    }
+                    else
                     {
                         Waypoint nextWp = DataHandler.GetClosestWaypointByIdentifier(waypoint.Identifier, pilot.Position.Latitude, pilot.Position.Longitude);
 
@@ -95,7 +91,6 @@ namespace SaunaSim.Api.Controllers
                                 LowerAltitudeConstraint = waypoint.LowerAltitudeConstraint,
                                 SpeedConstraintType = waypoint.SpeedConstratintType,
                                 SpeedConstraint = waypoint.SpeedConstraint,
-
                             };
 
                             if (lastPoint == null)
@@ -130,21 +125,25 @@ namespace SaunaSim.Api.Controllers
                 pilot.Start();
 
                 return Ok(new AircraftResponse(pilot, true));
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return BadRequest(e);
             }
         }
+
         [HttpGet("getAll")]
         public List<AircraftResponse> GetAllAircraft()
         {
             List<AircraftResponse> pilots = new List<AircraftResponse>();
-            foreach (var pilot in SimAircraftHandler.Aircraft)
+            SimAircraftHandler.PerformOnAircraft((list =>
             {
+                foreach (var pilot in list)
+                {
+                    pilots.Add(new AircraftResponse(pilot));
+                }
+            }));
 
-                pilots.Add(new AircraftResponse(pilot));
-
-            }
             return pilots;
         }
 
@@ -152,10 +151,14 @@ namespace SaunaSim.Api.Controllers
         public List<AircraftResponse> GetAllAircraftWithFms()
         {
             List<AircraftResponse> pilots = new List<AircraftResponse>();
-            foreach (var pilot in SimAircraftHandler.Aircraft)
+            SimAircraftHandler.PerformOnAircraft((list =>
             {
-                pilots.Add(new AircraftResponse(pilot, true));
-            }
+                foreach (var pilot in list)
+                {
+                    pilots.Add(new AircraftResponse(pilot, true));
+                }
+            }));
+
             return pilots;
         }
 
@@ -226,6 +229,5 @@ namespace SaunaSim.Api.Controllers
             SimAircraftHandler.DeleteAllAircraft();
             return Ok();
         }
-
     }
 }

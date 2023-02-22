@@ -24,7 +24,6 @@ namespace SaunaSim.Api.Controllers
     [Route("api/data")]
     public class DataController : ControllerBase
     {
-
         private readonly ILogger<DataController> _logger;
 
         public DataController(ILogger<DataController> logger)
@@ -46,12 +45,14 @@ namespace SaunaSim.Api.Controllers
             try
             {
                 AppSettingsManager.Settings = settings.ToAppSettings();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 if (ex is IndexOutOfRangeException || ex is FormatException || ex is OverflowException)
                 {
                     return BadRequest("Command frequency was not in the correct format.");
                 }
+
                 throw;
             }
 
@@ -67,10 +68,12 @@ namespace SaunaSim.Api.Controllers
             try
             {
                 MagneticUtil.LoadData();
-            } catch (Exception)
+            }
+            catch (Exception)
             {
                 return BadRequest("There was an error loading the WMM.COF file. Ensure that WMM.COF is placed in the 'magnetic' folder.");
             }
+
             return Ok("Magnetic File Loaded");
         }
 
@@ -100,7 +103,8 @@ namespace SaunaSim.Api.Controllers
                     {
                         // Get section name
                         sectionName = line.Replace("[", "").Replace("]", "").Trim();
-                    } else
+                    }
+                    else
                     {
                         NavaidType type = NavaidType.VOR;
                         string[] items;
@@ -108,13 +112,14 @@ namespace SaunaSim.Api.Controllers
                         {
                             case "VOR":
                                 type = NavaidType.VOR;
-                                goto case "AIRPORT";
+                                goto case "NAVAID_1";
                             case "NDB":
                                 type = NavaidType.NDB;
-                                goto case "AIRPORT";
+                                goto case "NAVAID_1";
                             case "AIRPORT":
                                 type = NavaidType.AIRPORT;
-
+                                goto case "NAVAID_1";
+                            case "NAVAID_1":
                                 items = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                                 if (items.Length >= 4)
@@ -123,11 +128,15 @@ namespace SaunaSim.Api.Controllers
                                     try
                                     {
                                         freq = Convert.ToDecimal(items[1]);
-                                    } catch (Exception) { }
+                                    }
+                                    catch (Exception)
+                                    {
+                                    }
 
                                     GeoUtil.ConvertVrcToDecimalDegs(items[2], items[3], out double lat, out double lon);
                                     DataHandler.AddWaypoint(new WaypointNavaid(items[0], lat, lon, "", freq, type));
                                 }
+
                                 break;
                             case "FIXES":
                                 items = line.Split(' ');
@@ -137,14 +146,17 @@ namespace SaunaSim.Api.Controllers
                                     GeoUtil.ConvertVrcToDecimalDegs(items[1], items[2], out double lat, out double lon);
                                     DataHandler.AddWaypoint(new Waypoint(items[0], lat, lon));
                                 }
+
                                 break;
                         }
                     }
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
+
             return Ok();
         }
 
@@ -189,34 +201,28 @@ namespace SaunaSim.Api.Controllers
                         //SimAircraft(string callsign, string networkId, string password,        string fullname, string hostname, ushort port, bool vatsim,   ProtocolRevision protocol,      double lat, double lon, double alt, double hdg_mag, int delayMs = 0)
                         lastPilot = new SimAircraft(callsign, request.Cid, request.Password, "Simulator Pilot", request.Server, (ushort)request.Port, request.Protocol,
                             ClientInfoLoader.GetClientInfo((string msg) => { _logger.LogWarning($"{callsign}: {msg}"); }),
-                            Convert.ToDouble(items[4]), Convert.ToDouble(items[5]), Convert.ToDouble(items[6]), hdg) {
-                            LogInfo = (string msg) => {
-                                _logger.LogInformation($"{callsign}: {msg}");
-                            },
-                            LogWarn = (string msg) => {
-                                _logger.LogWarning($"{callsign}: {msg}");
-                            },
-                            LogError = (string msg) => {
-                                _logger.LogError($"{callsign}: {msg}");
-                            },
-                            XpdrMode = xpdrMode,
+                            Convert.ToDouble(items[4]), Convert.ToDouble(items[5]), Convert.ToDouble(items[6]), hdg)
+                        {
+                            LogInfo = (string msg) => { _logger.LogInformation($"{callsign}: {msg}"); },
+                            LogWarn = (string msg) => { _logger.LogWarning($"{callsign}: {msg}"); },
+                            LogError = (string msg) => { _logger.LogError($"{callsign}: {msg}"); },
+                            XpdrMode = xpdrMode
                         };
                         lastPilot.Position.IndicatedAirSpeed = 250.0;
 
 
-
-
                         // Add to temp list
                         pilots.Add(lastPilot);
-                    } else if (line.StartsWith("$FP"))
+                    }
+                    else if (line.StartsWith("$FP"))
                     {
                         if (lastPilot != null)
                         {
                             lastPilot.FlightPlan = line;
                         }
-                    } else if (line.StartsWith("REQALT"))
+                    }
+                    else if (line.StartsWith("REQALT"))
                     {
-
                         string[] items = line.Split(':');
 
                         if (lastPilot != null && items.Length >= 3)
@@ -231,9 +237,13 @@ namespace SaunaSim.Api.Controllers
                                     $"FL{reqAlt}"
                                 };
                                 CommandHandler.HandleCommand("dm", lastPilot, args, (string msg) => _logger.LogInformation(msg));
-                            } catch (Exception) { }
+                            }
+                            catch (Exception)
+                            {
+                            }
                         }
-                    } else if (line.StartsWith("$ROUTE"))
+                    }
+                    else if (line.StartsWith("$ROUTE"))
                     {
                         string[] items = line.Split(':');
 
@@ -254,11 +264,13 @@ namespace SaunaSim.Api.Controllers
                                     if (pubHold != null)
                                     {
                                         lastPoint.PointType = RoutePointTypeEnum.FLY_OVER;
-                                        HoldToManualLeg leg = new HoldToManualLeg(lastPoint, BearingTypeEnum.MAGNETIC, pubHold.InboundCourse, pubHold.TurnDirection, pubHold.LegLengthType, pubHold.LegLength);
+                                        HoldToManualLeg leg = new HoldToManualLeg(lastPoint, BearingTypeEnum.MAGNETIC, pubHold.InboundCourse, pubHold.TurnDirection,
+                                            pubHold.LegLengthType, pubHold.LegLength);
                                         legs.Add(leg);
                                         lastPoint = leg.EndPoint;
                                     }
-                                } else
+                                }
+                                else
                                 {
                                     Waypoint nextWp = DataHandler.GetClosestWaypointByIdentifier(waypoints[i], lastPilot.Position.Latitude, lastPilot.Position.Longitude);
 
@@ -268,7 +280,8 @@ namespace SaunaSim.Api.Controllers
                                         if (lastPoint == null)
                                         {
                                             lastPoint = fmsPt;
-                                        } else
+                                        }
+                                        else
                                         {
                                             legs.Add(new TrackToFixLeg(lastPoint, fmsPt));
                                             lastPoint = fmsPt;
@@ -289,7 +302,8 @@ namespace SaunaSim.Api.Controllers
                                 lastPilot.Control.CurrentLateralInstruction = instr;
                             }
                         }
-                    } else if (line.StartsWith("START"))
+                    }
+                    else if (line.StartsWith("START"))
                     {
                         string[] items = line.Split(':');
 
@@ -299,9 +313,13 @@ namespace SaunaSim.Api.Controllers
                             {
                                 int delay = Convert.ToInt32(items[1]) * 60000;
                                 lastPilot.DelayMs = delay;
-                            } catch (Exception) { }
+                            }
+                            catch (Exception)
+                            {
+                            }
                         }
-                    } else if (line.StartsWith("ILS"))
+                    }
+                    else if (line.StartsWith("ILS"))
                     {
                         string[] items = line.Split(':');
                         string wpId = items[0];
@@ -313,18 +331,21 @@ namespace SaunaSim.Api.Controllers
                             if (items.Length == 4)
                             {
                                 course = Convert.ToDouble(items[3]);
-                            } else if (items.Length > 4)
+                            }
+                            else if (items.Length > 4)
                             {
                                 GeoPoint otherThreshold = new GeoPoint(Convert.ToDouble(items[3]), Convert.ToDouble(items[4]));
                                 course = MagneticUtil.ConvertTrueToMagneticTile(GeoPoint.InitialBearing(threshold, otherThreshold), threshold);
                             }
 
                             DataHandler.AddWaypoint(new Localizer(wpId, threshold.Lat, threshold.Lon, wpId, 0, course));
-                        } catch (Exception)
+                        }
+                        catch (Exception)
                         {
                             Console.WriteLine("Well that didn't work did it.");
                         }
-                    } else if (line.StartsWith("HOLDING"))
+                    }
+                    else if (line.StartsWith("HOLDING"))
                     {
                         string[] items = line.Split(':');
 
@@ -335,7 +356,8 @@ namespace SaunaSim.Api.Controllers
                             HoldTurnDirectionEnum turnDirection = (HoldTurnDirectionEnum)Convert.ToInt32(items[3]);
 
                             DataHandler.AddPublishedHold(new PublishedHold(wpId, inboundCourse, turnDirection));
-                        } catch (Exception)
+                        }
+                        catch (Exception)
                         {
                             Console.WriteLine("Well that didn't work did it.");
                         }
@@ -347,12 +369,13 @@ namespace SaunaSim.Api.Controllers
                     SimAircraftHandler.AddAircraft(pilot);
                     pilot.Start();
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.StackTrace);
             }
+
             return Ok();
         }
-
     }
 }
